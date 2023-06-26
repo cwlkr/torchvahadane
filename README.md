@@ -11,7 +11,7 @@ This repository provides a fully GPU based stain normalization workflow, useful 
 
 For WSI workflows, a fixed target stain matrix can be set, eliminating the need for recalculating the stain matrix for every new image patch and making the transformation fully GPU based.
 
-![Screenshot]('example_images/fig.png')
+![Screenshot](example_images/fig.png)
 
 Method| fit [s] | transform  [s] | total  [s]
 | :--- | :---: | :---: | :---:
