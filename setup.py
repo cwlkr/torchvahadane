@@ -7,7 +7,7 @@ setup(
     url='https://github.com/cwlkr',
     author='Cédric Walker',
     author_email='walker.cedric@outlook.com',
-    license='BSD 2-clause',
+    license='MIT',
     packages=['torchvahadane'],
     install_requires=['torch',
                       'numpy',
