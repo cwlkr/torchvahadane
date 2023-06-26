@@ -23,7 +23,7 @@ Method| fit [s] | transform  [s] | total  [s]
 
 
 ## Installation
-torchvahadane can be installed with pip using
+TorchVahadane can be installed with pip using
 
 ```
 git clone https://github.com/cwlkr/torchvahadane.git
