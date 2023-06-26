@@ -13,6 +13,8 @@ For WSI workflows, a fixed target stain matrix can be set, eliminating the need 
 
 ![Screenshot](example_images/fig.png)
 
+Benchmarks using line profiler show speed increase of TorchVahadane with the StainTools implementation.
+
 Method| fit [s] | transform  [s] | total  [s]
 | :--- | :---: | :---: | :---:
 **StainTools Vahadane**| 25.1 | 24.3 | 49.4
@@ -50,7 +52,7 @@ normalizer.transform(img)
 
 ## Notes
 Spams installation through pip throws more errors then not. Using conda pre-compiled binaries might work best.
-Spams is not listed in package requirements
+Spams is not listed in the package requirements.
 
 ## Acknowledgments
 
