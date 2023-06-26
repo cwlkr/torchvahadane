@@ -46,7 +46,6 @@ from torchvahadane import TorchVahadaneNormalizer
 normalizer = TorchVahadaneNormalizer(device='cuda', staintools_estimate=True)
 normalizer.fit(target)
 normalizer.transform(img)
-
 ```
 
 ## Notes
