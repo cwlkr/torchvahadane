@@ -40,7 +40,7 @@ pip install git+https://github.com/cwlkr/torchvahadane.git
 ## Usage
 
 TorchVahadane can be employed as a drop-in replacement for StainTools.
-Per default, the TorchVahadaneNormalizer uses the cuda device and uses staintools based stain_matrix estimation.
+Per default, the TorchVahadaneNormalizer uses the cuda device and uses staintools based stain_matrix estimation (fastest approach).
 As StainTools is now a read-only repository, StainTools is integrated and not used as a dependency.
 
 ```
@@ -51,7 +51,7 @@ normalizer.transform(img)
 ```
 
 ## Notes
-Spams installation through pip throws more errors then not. Using conda pre-compiled binaries might work best.
+Spams installation through pip throws more errors than not. Using conda's pre-compiled binaries might work best.
 Spams is not listed in the package requirements.
 
 ## Acknowledgments
