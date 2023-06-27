@@ -1,6 +1,6 @@
 # TorchVahadane
 
-[Vahdane stain normalization](https://ieeexplore.ieee.org/document/7460968) is being used extensively in Digital Pathology workflows to provide better generalization of Deep Learning models between cohorts.
+[Vahadane stain normalization](https://ieeexplore.ieee.org/document/7460968) is being used extensively in Digital Pathology workflows to provide better generalization of Deep Learning models between cohorts.
 
 The StainTools package has been one of the most used and most clear implementation of the Vahadane stain normalization.
 Unfortunately, StainTools can be slow when used on large images or on a large number of images.
