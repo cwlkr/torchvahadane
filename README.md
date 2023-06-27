@@ -13,7 +13,7 @@ For WSI workflows, a fixed target stain matrix can be set, eliminating the need 
 
 ![Screenshot](example_images/fig.png)
 
-Benchmarks using line profiler show speed increase of TorchVahadane compared to the StainTools.
+Benchmarks using LineProfiler show speed increase of TorchVahadane compared to StainTools.
 
 Method| fit [s] | transform  [s] | total  [s]
 | :--- | :---: | :---: | :---:
