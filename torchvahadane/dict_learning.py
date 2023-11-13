@@ -12,11 +12,13 @@ import torch.nn.functional as F
 from .eps import get_eps
 # min_{D in C} = (1/n) sum_{i=1}^n (1/2)||x_i-Dalpha_i||_2^2 + lambda1||alpha_i||_1 + lambda1_2||alpha_i||_2^2
 
+
 def lasso_loss(X, Z, weight, alpha=1.0):
     X_hat = torch.matmul(Z, weight.T)
-    lambda2= 10e-10
+    lambda2 = 10e-10
     lambda1 = 0.1
-    loss = 0.5 * (X - X_hat).norm(p=2).pow(2) + weight.norm(p=1) * lambda1 + lambda2 *weight.norm(p=2).pow(2)
+    loss = 0.5 * (X - X_hat).norm(p=2).pow(2) + weight.norm(p=1) * \
+        lambda1 + lambda2 * weight.norm(p=2).pow(2)
     return loss.mean()
 
 
@@ -142,6 +144,7 @@ _init_defaults = {
     'cd': 'zero',
 }
 
+
 def ridge(b, A, alpha=1e-4):
     # right-hand side
     rhs = torch.matmul(A.T, b)
@@ -155,6 +158,7 @@ def ridge(b, A, alpha=1e-4):
                            "Try increasing 'alpha'.")
     x = torch.cholesky_solve(rhs, L)
     return x
+
 
 def initialize_code(x, weight, alpha, mode):
     n_samples = x.size(0)
@@ -171,6 +175,7 @@ def initialize_code(x, weight, alpha, mode):
         raise ValueError("invalid init parameter '{}'.".format(mode))
 
     return z0
+
 
 def sparse_encode(x, weight, alpha=0.1, z0=None, algorithm='ista', init=None,
                   **kwargs):

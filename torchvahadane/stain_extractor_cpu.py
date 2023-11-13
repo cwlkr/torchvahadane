@@ -22,7 +22,8 @@ class StainExtractorCPU():
         """
         I_LAB = cv2.cvtColor(I, cv2.COLOR_RGB2LAB)
         L = I_LAB[:, :, 0] / 255.0  # Convert to range [0,1].
-        mask = (L < luminosity_threshold) & (L > 0)  # fix a bug where black background in wsi are not ignored
+        # fix a bug where black background in wsi are not ignored
+        mask = (L < luminosity_threshold) & (L > 0)
         # mask = mask & custom_tissue_mask
         # Check it's not empty
         if mask.sum() == 0:
@@ -50,7 +51,8 @@ class StainExtractorCPU():
         """
         assert I.dtype == np.uint8, "Image should be RGB uint8."
         # convert to OD and ignore background
-        tissue_mask = self.get_tissue_mask(I, luminosity_threshold=luminosity_threshold).reshape((-1,))
+        tissue_mask = self.get_tissue_mask(
+            I, luminosity_threshold=luminosity_threshold).reshape((-1,))
         OD = convert_RGB_to_OD_cpu(I).reshape((-1, 3))
         OD = OD[tissue_mask]
 

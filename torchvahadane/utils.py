@@ -6,8 +6,10 @@ import numpy as np
 from .optimizers import ista, coord_descent
 from typing import Union
 
+
 class TissueMaskException(Exception):
     pass
+
 
 def percentile(t: torch.Tensor, q: float, dim: int) -> Union[int, float]:
     """
@@ -85,8 +87,9 @@ def get_concentrations(I, stain_matrix, regularizer=0.01, method='ista'):
     """
     OD = convert_RGB_to_OD(I).reshape((-1, 3))
     # return spams.lasso(X=OD.T, D=stain_matrix.T, mode=2, lambda1=regularizer, pos=True).toarray().T  # figure out pylasso equivalent
-    if method =='cd':
-        return coord_descent(OD, stain_matrix.T, alpha=regularizer).T  # figure out pylasso equivalent
+    if method == 'cd':
+        # figure out pylasso equivalent
+        return coord_descent(OD, stain_matrix.T, alpha=regularizer).T
     elif method == 'ista':
         return ista(OD, 'ridge', stain_matrix.T, alpha=regularizer).T
     else:

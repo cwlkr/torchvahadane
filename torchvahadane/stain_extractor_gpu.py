@@ -3,18 +3,18 @@ from .utils import convert_RGB_to_OD, convert_RGB_to_OD_cpu, TissueMaskException
 import cv2
 import numpy as np
 from .dict_learning import dict_learning
-use_kornia=True
+use_kornia = True
 try:
     from kornia.color import rgb_to_lab
 except ImportError:
     use_kornia = False
+
 
 class StainExtractorGPU():
 
     def __init__(self):
         if not use_kornia:
             print('Kornia not installed. Using cv2 fallback')
-
 
     def get_tissue_mask(self, I, luminosity_threshold=0.8):
         """
@@ -27,13 +27,15 @@ class StainExtractorGPU():
         :return: Binary mask.
         """
         if use_kornia:
-            I_LAB = rgb_to_lab(I[None,:,:,:].transpose(1,3)/255)
-            L = (I_LAB[:, 0,:,:] /100 ).squeeze() # Convert to range [0,1].
+            I_LAB = rgb_to_lab(I[None, :, :, :].transpose(1, 3)/255)
+            L = (I_LAB[:, 0, :, :] / 100).squeeze()  # Convert to range [0,1].
         else:
-            I_LAB = torch.from_numpy(cv2.cvtColor(I.cpu().numpy(), cv2.COLOR_RGB2LAB))
-            L = (I_LAB[:,:,0]/255).squeeze()
+            I_LAB = torch.from_numpy(cv2.cvtColor(
+                I.cpu().numpy(), cv2.COLOR_RGB2LAB))
+            L = (I_LAB[:, :, 0]/255).squeeze()
         # also check for rgb == 255!
-        mask = (L < luminosity_threshold ) & (L > 0)  # fix bug in original stain tools code where black background is not ignored.
+        # fix bug in original stain tools code where black background is not ignored.
+        mask = (L < luminosity_threshold) & (L > 0)
         # Check it's not empty
         if mask.sum() == 0:
             raise TissueMaskException("Empty tissue mask computed")
@@ -47,7 +49,6 @@ class StainExtractorGPU():
         """
         return A / torch.linalg.norm(A, dim=1)[:, None]
 
-
     def get_stain_matrix(self, I, luminosity_threshold=0.8, regularizer=0.1):
         """
         Stain matrix estimation via method of:
@@ -59,12 +60,13 @@ class StainExtractorGPU():
         :return:
         """
         # convert to OD and ignore background
-        tissue_mask =  self.get_tissue_mask(I, luminosity_threshold=luminosity_threshold).reshape((-1,))
+        tissue_mask = self.get_tissue_mask(
+            I, luminosity_threshold=luminosity_threshold).reshape((-1,))
         OD = convert_RGB_to_OD(I).reshape((-1, 3))
         OD = OD[tissue_mask]
         # Change to pylasso dictionary training.
         dictionary, losses = dict_learning(OD, n_components=2, alpha=regularizer, lambd=0.01,
-         algorithm='ista', device='cuda', steps=30,constrained=True, progbar=False, persist=True, init='ridge')
+                                           algorithm='ista', device='cuda', steps=30, constrained=True, progbar=False, persist=True, init='ridge')
         # H on first row.
         dictionary = dictionary.T
         if dictionary[0, 0] < dictionary[1, 0]:

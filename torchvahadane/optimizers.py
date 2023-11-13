@@ -30,8 +30,8 @@ def coord_descent(x, W, z0=None, alpha=1.0, lambda1=0.01, maxiter=1000, tol=1e-6
     S.diagonal().add_(1.)
 
     def fn(z):
-        x_hat = torch.matmul( W, z.T)
-        loss = 0.5 * (x- x_hat).norm(p=2).pow(2) + z.norm(p=1)*lambda1
+        x_hat = torch.matmul(W, z.T)
+        loss = 0.5 * (x - x_hat).norm(p=2).pow(2) + z.norm(p=1)*lambda1
         return loss
 
     def cd_update(z, b):
@@ -39,7 +39,7 @@ def coord_descent(x, W, z0=None, alpha=1.0, lambda1=0.01, maxiter=1000, tol=1e-6
         z_diff = z_next - z  # [N,K]
         k = z_diff.abs().argmax(1)  # [N]
         kk = k.unsqueeze(1)  # [N,1]
-        b = b + S[:,k].T * z_diff.gather(1, kk)  # [N,K] += [N,K] * [N,1]
+        b = b + S[:, k].T * z_diff.gather(1, kk)  # [N,K] += [N,K] * [N,1]
         z = z.scatter(1, kk, z_next.gather(1, kk))
         return z, b
 
@@ -59,14 +59,16 @@ def coord_descent(x, W, z0=None, alpha=1.0, lambda1=0.01, maxiter=1000, tol=1e-6
 
     return z
 
+
 def _lipschitz_constant(W):
-    #L = torch.linalg.norm(W, ord=2) ** 2
+    # L = torch.linalg.norm(W, ord=2) ** 2
     WtW = torch.matmul(W.t(), W)
     # L = torch.linalg.eigvalsh(WtW)[-1]
     L = eigsh(WtW.detach().cpu().numpy(), k=1, which='LM',
               return_eigenvectors=False).item()
 
-    if not np.isfinite(L):  # sometimes L is not finite because of potential cublas error.
+    # sometimes L is not finite because of potential cublas error.
+    if not np.isfinite(L):
         L = torch.linalg.norm(W, ord=2) ** 2
     return L
 
@@ -75,7 +77,8 @@ def ista(x, z0, weight, alpha=1.0, fast=True, lr='auto', maxiter=100,
          tol=1e-5, backtrack=False, eta_backtrack=1.5, verbose=False):
 
     if type(z0) is str:
-        from .dict_learning import initialize_code # imprort here to remove circ dependency
+        # imprort here to remove circ dependency
+        from .dict_learning import initialize_code
         z0 = initialize_code(x, weight, alpha, z0)
 
     if lr == 'auto':
@@ -87,13 +90,13 @@ def ista(x, z0, weight, alpha=1.0, fast=True, lr='auto', maxiter=100,
 
     def loss_fn(z_k):
         x_hat = torch.matmul(weight, z_k.T)
-        loss = 0.5 * (x.T-x_hat).norm(p=2).pow(2) # + z_k.norm(p=1)*lambda1
+        loss = 0.5 * (x.T-x_hat).norm(p=2).pow(2)  # + z_k.norm(p=1)*lambda1
         return loss
 
     def rss_grad(z_k):
         resid = torch.matmul(z_k, weight.T) - x
         return torch.matmul(resid, weight)
-        
+
     # optimize
     z0 = z0.clip(min=0)
     z = z0
@@ -105,7 +108,8 @@ def ista(x, z0, weight, alpha=1.0, fast=True, lr='auto', maxiter=100,
         # ista update
         z_prev = y if fast else z
         try:
-            z_next = F.softshrink((z_prev - lr * rss_grad(z_prev)).clip(min=0), alpha * lr)
+            z_next = F.softshrink(
+                (z_prev - lr * rss_grad(z_prev)).clip(min=0), alpha * lr)
         except RuntimeError as e:
             print(e)
             print('lr error ', lr, 'did not update z')
