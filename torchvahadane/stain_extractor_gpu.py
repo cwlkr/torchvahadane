@@ -1,8 +1,8 @@
 import torch
-from torchvahadane.utils import convert_RGB_to_OD, convert_RGB_to_OD_cpu, TissueMaskException
+from .utils import convert_RGB_to_OD, convert_RGB_to_OD_cpu, TissueMaskException
 import cv2
 import numpy as np
-from torchvahadane.dict_learning import dict_learning
+from .dict_learning import dict_learning
 use_kornia=True
 try:
     from kornia.color import rgb_to_lab

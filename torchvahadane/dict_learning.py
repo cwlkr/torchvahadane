@@ -4,12 +4,12 @@ code directly adapted from https://github.com/rfeinman/pytorch-lasso
 import warnings
 import torch
 
-from torchvahadane.optimizers import coord_descent, ista
+from .optimizers import coord_descent, ista
 from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvahadane.eps import get_eps
+from .eps import get_eps
 # min_{D in C} = (1/n) sum_{i=1}^n (1/2)||x_i-Dalpha_i||_2^2 + lambda1||alpha_i||_1 + lambda1_2||alpha_i||_2^2
 
 def lasso_loss(X, Z, weight, alpha=1.0):

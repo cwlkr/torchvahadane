@@ -1,6 +1,6 @@
 """ Code directly adapted from https://github.com/Peter554/StainTools"""
 
-from torchvahadane.utils import convert_RGB_to_OD, convert_RGB_to_OD_cpu, TissueMaskException
+from .utils import convert_RGB_to_OD, convert_RGB_to_OD_cpu, TissueMaskException
 import cv2
 import numpy as np
 import spams

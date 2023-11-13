@@ -3,7 +3,7 @@ some code directly adapted from https://github.com/Peter554/StainTools and https
 """
 import torch
 import numpy as np
-from torchvahadane.optimizers import ista, coord_descent
+from .optimizers import ista, coord_descent
 from typing import Union
 
 class TissueMaskException(Exception):
@@ -83,7 +83,7 @@ def get_concentrations(I, stain_matrix, regularizer=0.01, method='ista'):
     :param regularizer:
     :return:
     """
-    OD = convert_RGB_to_OD(I).reshape((-1, 3)).to('cuda')
+    OD = convert_RGB_to_OD(I).reshape((-1, 3))
     # return spams.lasso(X=OD.T, D=stain_matrix.T, mode=2, lambda1=regularizer, pos=True).toarray().T  # figure out pylasso equivalent
     if method =='cd':
         return coord_descent(OD, stain_matrix.T, alpha=regularizer).T  # figure out pylasso equivalent
