@@ -1,6 +1,6 @@
 # TorchVahadane
 
-[Vahdane stain normalization](https://ieeexplore.ieee.org/document/7460968) is being used extensively in Digital Pathology workflows to provide better generalization of Deep Learning models in between cohorts.
+[Vahadane stain normalization](https://ieeexplore.ieee.org/document/7460968) is being used extensively in Digital Pathology workflows to provide better generalization of Deep Learning models between cohorts.
 
 The StainTools package has been one of the most used and most clear implementation of the Vahadane stain normalization.
 Unfortunately, StainTools can be slow when used on large images or on a large number of images.
@@ -11,7 +11,9 @@ This repository provides a fully GPU based stain normalization workflow, useful 
 
 For WSI workflows, a fixed target stain matrix can be set, eliminating the need for recalculating the stain matrix for every new image patch and making the transformation fully GPU based.
 
-![Screenshot]('example_images/fig.png')
+![Screenshot](example_images/fig.png)
+
+Benchmarks using LineProfiler show speed increase of TorchVahadane compared to StainTools.
 
 Method| fit [s] | transform  [s] | total  [s]
 | :--- | :---: | :---: | :---:
@@ -21,7 +23,7 @@ Method| fit [s] | transform  [s] | total  [s]
 
 
 ## Installation
-torchvahadane can be installed with pip using
+TorchVahadane can be installed with pip using
 
 ```
 git clone https://github.com/cwlkr/torchvahadane.git
@@ -38,7 +40,7 @@ pip install git+https://github.com/cwlkr/torchvahadane.git
 ## Usage
 
 TorchVahadane can be employed as a drop-in replacement for StainTools.
-Per default, the TorchVahadaneNormalizer uses the cuda device and uses staintools based stain_matrix estimation.
+Per default, the TorchVahadaneNormalizer uses the cuda device and uses staintools based stain_matrix estimation (fastest approach).
 As StainTools is now a read-only repository, StainTools is integrated and not used as a dependency.
 
 ```
@@ -46,12 +48,11 @@ from torchvahadane import TorchVahadaneNormalizer
 normalizer = TorchVahadaneNormalizer(device='cuda', staintools_estimate=True)
 normalizer.fit(target)
 normalizer.transform(img)
-
 ```
 
 ## Notes
-Spams installation through pip throws more errors then not. Using conda pre-compiled binaries might work best.
-Spams is not listed in package requirements
+Spams installation through pip throws more errors than not. Using conda's pre-compiled binaries might work best.
+Spams is not listed in the package requirements.
 
 ## Acknowledgments
 

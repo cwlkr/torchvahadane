@@ -10,7 +10,7 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from torchvahadane.eps import get_eps
 # min_{D in C} = (1/n) sum_{i=1}^n (1/2)||x_i-Dalpha_i||_2^2 + lambda1||alpha_i||_1 + lambda1_2||alpha_i||_2^2
 
 def lasso_loss(X, Z, weight, alpha=1.0):
@@ -139,10 +139,17 @@ def update_dict(dictionary, X, Z, random_seed=None, positive=True,
         # Re-scale k'th atom
         atom_norm = dictionary[:, k].norm()
         if atom_norm < eps:
+            # note that the random generated number can be all negative
+            # and the clamp will get you a zero vector with zero norm --> 0/0 = nan
             dictionary[:, k].normal_()
+            dictionary[:, k] = dictionary[:, k].abs()
+            # might be
             if positive:
+                # if all negative this line will create a zero vector
                 dictionary[:, k].clamp_(0, None)
-            dictionary[:, k] /= dictionary[:, k].norm()
+            # another layer of protection
+            column_norm = dictionary[:, k].norm() + get_eps(dictionary)
+            dictionary[:, k] /= column_norm
             # Set corresponding coefs to 0
             Z[:, k].zero_()  # TODO: is this necessary?
         else:

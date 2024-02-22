@@ -142,9 +142,9 @@ if __name__ == '__main__':
 
     import cv2
     import matplotlib.pyplot as plt
-    ref = cv2.imread('refer/test_img1.png')
-    target = cv2.cvtColor(ref, 4)
-    norm = cv2.imread('refer/mc_brca_366394T1_9476_7101.png')
+    target = cv2.imread('test_images/TCGA-33-4547-01Z-00-DX7.91be6f90-d9ab-4345-a3bd-91805d9761b9_8270_5932_0.png')
+    target = cv2.cvtColor(target, 4)
+    norm = cv2.imread('test_images/TCGA-95-8494-01Z-00-DX1.716299EF-71BB-4095-8F4D-F0C2252CE594_5932_5708_0.png')
     norm = cv2.cvtColor(norm, 4)
     plt.imshow(norm)
     norm[2500:5000, 2500:5000,:] = 255
