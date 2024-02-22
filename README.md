@@ -17,9 +17,11 @@ Benchmarks using LineProfiler show speed increase of TorchVahadane compared to S
 
 Method| fit [s] | transform  [s] | total  [s]
 | :--- | :---: | :---: | :---:
-**StainTools Vahadane**| 25.1 | 24.3 | 49.4
-**TorchVahadane** | 7.3 | 6.5 | 13.8
-**TorchVahadane ST**| 3.3 | 1.8 |  ***5.1***
+**StainTools Vahadane**| 17.4 | 17.1 | 34.5
+**TorchVahadane** | 9.4 | 8.5 | 17.9
+**TorchVahadane ST**| 3.2 | 3.1 |  ***6.3***
+
+Measured using python 3.11.3 and spams 2.6.5.4
 
 ## Usage
 
@@ -55,13 +57,11 @@ from torchvahadane import TorchVahadaneNormalizer
 normalizer = TorchVahadaneNormalizer(correct_exposure=True)
 normalizer.fit(target)
 normalizer.transform(img)
-normalizer.set_stain_matrix(m_s)
-
 ```
 Masked histogram matching can also be used directly from the histogram_matching module.
 
 
-## Robust stain estimation of Whole Slide Image
+## Robust stain estimation of Whole Slide Images
 TorchVahadane also supports the estimation of median stain intensities, as proposed by Vahadane et al.
 TorchVahadane samples the WSI over a grid of tiles amd returns the median stain instensities. Openslide is used as an optional dependency to extract the WSI tiles.
 
@@ -93,6 +93,8 @@ pip install git+https://github.com/cwlkr/torchvahadane.git
 ## Notes
 Spams installation through pip throws more errors than not. Using conda's pre-compiled binaries might work best.
 Spams is not listed in the package requirements.
+
+Openslide is not listed in the package requirements as it is considered optional.
 
 ## Acknowledgments
 
