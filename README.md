@@ -23,7 +23,7 @@ Method| fit [s] | transform  [s] | total  [s]
 
 Brackets indicate the transformation speed when using a fixed stain matrix (see [robust stain estimation](#robust-stain-estimation-of-whole-slide-images)). Measured using python 3.11.3 and spams 2.6.5.4. 
 
-The new TorchVahdane version fixes instabilities in the concentration estimation by replacing the ista algorithm with the iterative positive thresholding algorithm (IPTA), which uses the correct positivity constraint for the sparse regularization problem.
+The new TorchVahadane version fixes instabilities in the concentration estimation by replacing the ista algorithm with the iterative positive thresholding algorithm (IPTA), which uses the correct positivity constraint for the sparse regularization problem.
 
 ## Usage
 
