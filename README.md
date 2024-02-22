@@ -21,7 +21,7 @@ Method| fit [s] | transform  [s] | total  [s]
 **TorchVahadane** | 9.4 | 8.5 [*1.5*] | 17.9
 **TorchVahadane ST**| 3.2 | 3.1 [*1.5*] |  ***6.3***
 
-Brackets indicate the transformation speed when using a fixed stain matrix (see [set_stain_matrix](#robust-stain-estimation-of-whole-slide-images)). Measured using python 3.11.3 and spams 2.6.5.4. 
+Brackets indicate the transformation speed when using a fixed stain matrix (see [robust stain estimation](#robust-stain-estimation-of-whole-slide-images)). Measured using python 3.11.3 and spams 2.6.5.4. 
 
 ## Usage
 
