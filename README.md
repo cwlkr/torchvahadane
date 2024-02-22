@@ -21,6 +21,58 @@ Method| fit [s] | transform  [s] | total  [s]
 **TorchVahadane** | 7.3 | 6.5 | 13.8
 **TorchVahadane ST**| 3.3 | 1.8 |  ***5.1***
 
+## Usage
+
+TorchVahadane can be employed as a drop-in replacement for StainTools.
+Per default, the TorchVahadaneNormalizer uses the cuda device and uses staintools based stain_matrix estimation (fastest and most robust approach).
+As StainTools is now a read-only repository, StainTools is integrated and not used as a dependency. The transform function also has a default parameter to pass-through the generated tissue mask for downstream tasks.
+
+```
+from torchvahadane import TorchVahadaneNormalizer
+normalizer = TorchVahadaneNormalizer(device='cuda', staintools_estimate=True)
+normalizer.fit(target)
+img_normed = normalizer.transform(img)
+
+# return tissue mask
+img_normed, img_mask = normalizer.transform(img, return_mask=True)
+```
+
+## Histogram matching
+
+In practice, Vahadane normalization does not always transfer the saturation and contrast of the reference image to the source image, this retaining a domain shift between the target and source image.
+
+This can be mitigated by using histogram matching (See [skimage.exposure.match_histograms](https://scikit-image.org/docs/stable/auto_examples/color_exposure/plot_histogram_matching.html)).
+
+TorchVahadane implements masked histogram matching using torch, matching the cumulative density function of the histograms only on tissue pixels. This makes histogram matching suitable to work on histology tiles with non-tissue regions.
+
+![Screenshot](example_images/histogram_matching_fig.png)
+
+
+Histogram matching is integrated into the standard fit/transform pipeline and is enabled by setting correct_exposure to True.
+
+```
+from torchvahadane import TorchVahadaneNormalizer
+normalizer = TorchVahadaneNormalizer(correct_exposure=True)
+normalizer.fit(target)
+normalizer.transform(img)
+normalizer.set_stain_matrix(m_s)
+
+```
+Masked histogram matching can also be used directly from the histogram_matching module.
+
+
+## Robust stain estimation of Whole Slide Image
+TorchVahadane also supports the estimation of median stain intensities, as proposed by Vahadane et al.
+TorchVahadane samples the WSI over a grid of tiles amd returns the median stain instensities. Openslide is used as an optional dependency to extract the WSI tiles.
+
+Setting a fixed stain_matrix skips the stain_matrix estimation of the source image in the transform, speeding up subsequent transformations.
+
+```
+from torchvahadane.wsi_util import estimate_median_matrix
+
+stain_matrix = estimate_median_matrix(osh, normalizer, osh_level=0, tile_size=4096, num_workers=12)
+normalizer.set_stain_matrix(stain_matrix)
+```
 
 ## Installation
 TorchVahadane can be installed with pip using
@@ -37,18 +89,6 @@ or directly
 pip install git+https://github.com/cwlkr/torchvahadane.git
 ```
 
-## Usage
-
-TorchVahadane can be employed as a drop-in replacement for StainTools.
-Per default, the TorchVahadaneNormalizer uses the cuda device and uses staintools based stain_matrix estimation (fastest approach).
-As StainTools is now a read-only repository, StainTools is integrated and not used as a dependency.
-
-```
-from torchvahadane import TorchVahadaneNormalizer
-normalizer = TorchVahadaneNormalizer(device='cuda', staintools_estimate=True)
-normalizer.fit(target)
-normalizer.transform(img)
-```
 
 ## Notes
 Spams installation through pip throws more errors than not. Using conda's pre-compiled binaries might work best.

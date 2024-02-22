@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='torchvahadane',
-    version='0.1.0',
+    version='0.1.1',
     description='Gpu accelerated vahadane stain normalization',
     url='https://github.com/cwlkr',
     author='Cédric Walker',
