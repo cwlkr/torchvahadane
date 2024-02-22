@@ -48,7 +48,7 @@ class StainExtractorGPU():
         return A / torch.linalg.norm(A, dim=1)[:, None]
 
 
-    def get_stain_matrix(self, I, luminosity_threshold=0.8, regularizer=0.1):
+    def get_stain_matrix(self, I, luminosity_threshold=0.8, regularizer=0.1, mask=None):
         """
         Stain matrix estimation via method of:
         A. Vahadane et al. 'Structure-Preserving Color Normalization and Sparse Stain Separation for Histological Images'
@@ -59,12 +59,12 @@ class StainExtractorGPU():
         :return:
         """
         # convert to OD and ignore background
-        tissue_mask =  self.get_tissue_mask(I, luminosity_threshold=luminosity_threshold).reshape((-1,))
+        mask = self.get_tissue_mask(I, luminosity_threshold=luminosity_threshold).reshape((-1,)) if mask is None else  mask.reshape((-1,))
         OD = convert_RGB_to_OD(I).reshape((-1, 3))
-        OD = OD[tissue_mask]
+        OD = OD[mask]
         # Change to pylasso dictionary training.
-        dictionary, losses = dict_learning(OD, n_components=2, alpha=regularizer, lambd=0.01,
-         algorithm='ista', device='cuda', steps=30,constrained=True, progbar=False, persist=True, init='ridge')
+        dictionary, losses = dict_learning(OD, n_components=2, alpha=regularizer, lambd=0.1,
+             algorithm='ista', device='cuda', steps=70, constrained=True, progbar=False, persist=True, init='ridge', cut=30, maxiter=50, positive=True)
         # H on first row.
         dictionary = dictionary.T
         if dictionary[0, 0] < dictionary[1, 0]:

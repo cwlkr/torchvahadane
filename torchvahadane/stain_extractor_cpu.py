@@ -36,7 +36,7 @@ class StainExtractorCPU():
         """
         return A / np.linalg.norm(A, axis=1)[:, None]
 
-    def get_stain_matrix(self, I, luminosity_threshold=0.8, regularizer=0.1):
+    def get_stain_matrix(self, I, luminosity_threshold=0.8, regularizer=0.1, mask=None):
         """
         Stain matrix estimation via method of:
         A. Vahadane et al. 'Structure-Preserving Color Normalization and Sparse Stain Separation for Histological Images'
@@ -47,11 +47,12 @@ class StainExtractorCPU():
         :return:
         """
         assert I.dtype == np.uint8, "Image should be RGB uint8."
+        if mask is not None:
+            assert mask.ndim == 2, 'Mask should not have channels'
         # convert to OD and ignore background
-        tissue_mask = self.get_tissue_mask(I, luminosity_threshold=luminosity_threshold).reshape((-1,))
+        tissue_mask = self.get_tissue_mask(I, luminosity_threshold=luminosity_threshold).reshape((-1,)) if mask is None else mask.reshape((-1,))
         OD = convert_RGB_to_OD_cpu(I).reshape((-1, 3))
         OD = OD[tissue_mask]
-
         # do the dictionary learning
         dictionary = spams.trainDL(X=OD.T, K=2, lambda1=regularizer, mode=2,
                                    modeD=0, posAlpha=True, posD=True, verbose=False).T

@@ -1,10 +1,11 @@
 """
 code directly adapted from https://github.com/rfeinman/pytorch-lasso
+This code does not yet reliably function and is slower than using spams based implementation.
 """
 import warnings
 import torch
+from torchvahadane.optimizers import coord_descent, ista, initialize_code
 
-from torchvahadane.optimizers import coord_descent, ista
 from tqdm import tqdm
 import torch
 import torch.nn as nn
@@ -27,6 +28,44 @@ def dict_evaluate(X, weight, alpha, **kwargs):
     return loss
 
 
+def dict_update(Dt, A, B):
+    for j in range(Dt.shape[1]):
+        u = ((B[:,j] - (Dt@A[:,j])) + B[:,j])/(A[j,j])
+        u =  u/max(u.norm(), 1)
+        d = u.clamp_(0,None)
+        #d = 1/max(u.norm(), 1) * u
+        Dt[:,j] = d
+    return Dt
+
+
+
+def _dict_learning(X, K=2, lambda1=0.1, device='cuda', steps=60, batch_size=128000):
+    n_samples, m = X.shape
+    A = torch.zeros((K,K),device=device)
+    B = torch.zeros((m, K), device=device)
+    D = X[torch.randint(high=n_samples, size=(2,)),:].T# random init
+    c = 30
+    i = 40
+    alpha = 'ridge'
+    for i in range(steps):
+        X_ = X[torch.randperm(n_samples)[:batch_size],:]
+        alpha = ista(X_, 'ridge', D, alpha=lambda1, positive=True, cut=c, maxiter=i)
+        # alpha = ista(X_[[0,1,2],:], 'ridge', D, alpha=lambda1, positive=True, cut=c, maxiter=i)
+        # import spams
+        # alpha = spams.lasso(X=X_[[0,1,2],:].cpu().numpy().T, D=D.cpu().numpy(), mode=2, lambda1=0.1, pos=True,L=2).toarray().T
+        #alpha=  torch.from_numpy(alpha).to(device)
+        A = A + ((alpha[:].T @ alpha[:])/batch_size)
+        for i in range(64000):
+            A += alpha[[i], :].T @ alpha[[i], :]
+
+        alpha[[1], :].T @ X_[[1],:]
+
+        B = B + ((X_.T @ alpha)/batch_size)
+        D  = dict_update(D, A, B)
+        print(lasso_loss(X_, alpha, D, lambda1)/batch_size)
+    return D
+
+
 def dict_learning(X, n_components, alpha=1.0, constrained=True, persist=False,
                   lambd=1e-2, steps=60, device='cpu', progbar=True,
                   **solver_kwargs):
@@ -42,8 +81,11 @@ def dict_learning(X, n_components, alpha=1.0, constrained=True, persist=False,
     with tqdm(total=steps, disable=not progbar) as progress_bar:
         for i in range(steps):
             # infer sparse coefficients and compute loss
-            Z = sparse_encode(X, weight, alpha, Z0, **solver_kwargs)
-            losses[i] = lasso_loss(X, Z, weight, alpha)
+            # Z = sparse_encode(X, weight, alpha, Z0, **solver_kwargs)
+            Z = sparse_encode(X, weight, alpha, Z0, algorithm='cd', init='zero', positive=True)
+
+
+            # losses[i] = lasso_loss(X, Z, weight, alpha)
             if persist:
                 Z0 = Z
 
@@ -53,11 +95,11 @@ def dict_learning(X, n_components, alpha=1.0, constrained=True, persist=False,
             else:
                 weight = update_dict_ridge(X, Z, lambd=lambd)
 
-            # update progress bar
-            progress_bar.set_postfix(loss=losses[i].item())
-            progress_bar.update(1)
+            # # update progress bar
+            # progress_bar.set_postfix(loss=losses[i].item())
+            # progress_bar.update(1)
 
-    return weight, losses
+    return weight, 1
 
 
 def update_dict(dictionary, X, Z, random_seed=None, positive=True,
@@ -135,57 +177,28 @@ _init_defaults = {
     'cd': 'zero',
 }
 
-def ridge(b, A, alpha=1e-4):
-    # right-hand side
-    rhs = torch.matmul(A.T, b)
-    # regularized gram matrix
-    M = torch.matmul(A.T, A)
-    M.diagonal().add_(alpha)
-    # solve
-    L, info = torch.linalg.cholesky_ex(M)
-    if info != 0:
-        raise RuntimeError("The Gram matrix is not positive definite. "
-                           "Try increasing 'alpha'.")
-    x = torch.cholesky_solve(rhs, L)
-    return x
-
-def initialize_code(x, weight, alpha, mode):
-    n_samples = x.size(0)
-    n_components = weight.size(1)
-    if mode == 'zero':
-        z0 = x.new_zeros(n_samples, n_components)
-    elif mode == 'unif':
-        z0 = x.new(n_samples, n_components).uniform_(-0.1, 0.1)
-    elif mode == 'transpose':
-        z0 = torch.matmul(x, weight)
-    elif mode == 'ridge':
-        z0 = ridge(x.T, weight, alpha=alpha).T
-    else:
-        raise ValueError("invalid init parameter '{}'.".format(mode))
-
-    return z0
 
 def sparse_encode(x, weight, alpha=0.1, z0=None, algorithm='ista', init=None,
                   **kwargs):
     n_samples = x.size(0)
     n_components = weight.size(1)
-
+    c, i = None, None
     # initialize code variable
     if z0 is not None:
         assert z0.shape == (n_samples, n_components)
+        c,i = 10, 12
     else:
         if init is None:
             init = _init_defaults.get(algorithm, 'zero')
         elif init == 'zero' and algorithm == 'iter-ridge':
             warnings.warn("Iterative Ridge should not be zero-initialized.")
         z0 = initialize_code(x, weight, alpha, mode=init)
-
+        c,i = 60, 65
     # perform inference
     if algorithm == 'cd':
         z = coord_descent(x, weight, z0, alpha, **kwargs)
     elif algorithm == 'ista':
-        z = ista(x, z0, weight, alpha, **kwargs)
+        z = ista(x, z0, weight, alpha, positive=True, cut=c, maxiter=i)
     else:
         raise ValueError("invalid algorithm parameter '{}'.".format(algorithm))
-
     return z

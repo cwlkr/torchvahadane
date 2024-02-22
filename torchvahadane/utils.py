@@ -1,5 +1,5 @@
 """
-some code directly adapted from https://github.com/Peter554/StainTools and https://github.com/EIDOSLAB/torchstain
+Parts directly adapted from https://github.com/Peter554/StainTools and https://github.com/EIDOSLAB/torchstain
 """
 import torch
 import numpy as np
@@ -7,13 +7,24 @@ from torchvahadane.optimizers import ista, coord_descent
 from typing import Union
 
 class TissueMaskException(Exception):
+    """generic Exception raised when calculations fail because of not enough foreground pixels"""
     pass
+
+
+def _to_tensor(m, device=None):
+    """if numpy turn to tensor, otherwise no-op"""
+    m = m if isinstance(m, torch.Tensor) else torch.from_numpy(m).to(device)
+    return m.float() if torch.is_floating_point(m) else m # we dont want float64
+
+def _to_array(m):
+    """if numpy turn to tensor, otherwise no-op"""
+    return m.cpu().numpy() if isinstance(m, torch.Tensor) else m
+
 
 def percentile(t: torch.Tensor, q: float, dim: int) -> Union[int, float]:
     """
     Author: addapted from https://gist.github.com/spezold/42a451682422beb42bc43ad0c0967a30
-    """
-    """
+
     Return the ``q``-th percentile of the flattenepip d input tensor's data.
 
     CAUTION:
@@ -79,16 +90,14 @@ def get_concentrations(I, stain_matrix, regularizer=0.01, method='ista'):
     Estimate concentration matrix given an image and stain matrix.
 
     :param I:
+    :param method: str, select optimizer method.
     :param stain_matrix:
     :param regularizer:
     :return:
     """
     OD = convert_RGB_to_OD(I).reshape((-1, 3)).to('cuda')
-    # return spams.lasso(X=OD.T, D=stain_matrix.T, mode=2, lambda1=regularizer, pos=True).toarray().T  # figure out pylasso equivalent
-    if method =='cd':
-        return coord_descent(OD, stain_matrix.T, alpha=regularizer).T  # figure out pylasso equivalent
-    elif method == 'ista':
-        return ista(OD, 'ridge', stain_matrix.T, alpha=regularizer).T
+    if method == 'ista':
+        return ista(OD, 'ridge', stain_matrix.T, alpha=regularizer, positive=True).T
     else:
         print(method, ' is not a valid optimizer')
         raise NotImplementedError

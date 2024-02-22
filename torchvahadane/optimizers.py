@@ -1,5 +1,5 @@
 """
-code directly adapted from https://github.com/rfeinman/pytorch-lasso
+code adapted from https://github.com/rfeinman/pytorch-lasso
 """
 import math
 from scipy.sparse.linalg import eigsh
@@ -7,9 +7,41 @@ import torch
 from typing import Union
 import torch.nn.functional as F
 import numpy as np
+from torch import Tensor
+import warnings
+
+def ridge(b, A, alpha=1e-4):
+    # right-hand side
+    rhs = torch.matmul(A.T, b)
+    # regularized gram matrix
+    M = torch.matmul(A.T, A)
+    M.diagonal().add_(alpha)
+    # solve
+    L, info = torch.linalg.cholesky_ex(M)
+    if info != 0:
+        raise RuntimeError("The Gram matrix is not positive definite. "
+                           "Try increasing 'alpha'.")
+    x = torch.cholesky_solve(rhs, L)
+    return x
+
+def initialize_code(x, weight, alpha, mode):
+    n_samples = x.size(0)
+    n_components = weight.size(1)
+    if mode == 'zero':
+        z0 = x.new_zeros(n_samples, n_components)
+    elif mode == 'unif':
+        z0 = x.new(n_samples, n_components).uniform_(-0.1, 0.1)
+    elif mode == 'transpose':
+        z0 = torch.matmul(x, weight)
+    elif mode == 'ridge':
+        z0 = ridge(x.T, weight, alpha=alpha).T
+    else:
+        raise ValueError("invalid init parameter '{}'.".format(mode))
+
+    return z0
 
 
-def coord_descent(x, W, z0=None, alpha=1.0, lambda1=0.01, maxiter=1000, tol=1e-6, verbose=False):
+def coord_descent(x, W, z0=None, alpha=1.0, lambda1=0.01, maxiter=1000, tol=1e-6, verbose=False, positive=True):
     """ modified coord_descent"""
     input_dim, code_dim = W.shape  # [D,K]
     batch_size, input_dim1 = x.shape  # [N,D]
@@ -35,7 +67,10 @@ def coord_descent(x, W, z0=None, alpha=1.0, lambda1=0.01, maxiter=1000, tol=1e-6
         return loss
 
     def cd_update(z, b):
-        z_next = F.softshrink(b, alpha)  # [N,K]
+        if positive:
+            z_next  = torch.clamp(b.abs() - alpha, min=0)
+        else:
+            z_next = F.softshrink(b, alpha)  # [N,K]
         z_diff = z_next - z  # [N,K]
         k = z_diff.abs().argmax(1)  # [N]
         kk = k.unsqueeze(1)  # [N,1]
@@ -55,9 +90,13 @@ def coord_descent(x, W, z0=None, alpha=1.0, lambda1=0.01, maxiter=1000, tol=1e-6
         if verbose:
             print('iter %i - loss: %0.4f' % (i, fn(F.softshrink(b, alpha))))
 
-    z = F.softshrink(b, alpha)
+    if positive:
+        z  = torch.clamp(b.abs() - alpha, min=0)
+    else:
+        z = F.softshrink(b, alpha)  # [N,K]
 
     return z
+
 
 def _lipschitz_constant(W):
     #L = torch.linalg.norm(W, ord=2) ** 2
@@ -71,11 +110,10 @@ def _lipschitz_constant(W):
     return L
 
 
-def ista(x, z0, weight, alpha=1.0, fast=True, lr='auto', maxiter=50,
-         tol=1e-5, backtrack=False, eta_backtrack=1.5, verbose=False):
+def ista(x, z0, weight, alpha=1.0, fast=True, lr='auto', maxiter=250,
+         tol=1e-10, backtrack=False, eta_backtrack=1.5, verbose=False, positive=True, cut=200):
 
     if type(z0) is str:
-        from torchvahadane.dict_learning import initialize_code # imprort here to remove circ dependency
         z0 = initialize_code(x, weight, alpha, z0)
 
     if lr == 'auto':
@@ -87,7 +125,7 @@ def ista(x, z0, weight, alpha=1.0, fast=True, lr='auto', maxiter=50,
 
     def loss_fn(z_k):
         x_hat = torch.matmul(weight, z_k.T)
-        loss = 0.5 * (x.T-x_hat).norm(p=2).pow(2) + z_k.norm(p=1)*lambda1
+        loss = 0.5 * (x.T-x_hat).norm(p=2).pow(2) + z_k.norm(p=1)*alpha
         return loss
 
     def rss_grad(z_k):
@@ -98,28 +136,27 @@ def ista(x, z0, weight, alpha=1.0, fast=True, lr='auto', maxiter=50,
     z = z0
     if fast:
         y, t = z0, 1
-    for _ in range(maxiter):
+    for i in range(maxiter):
         if verbose:
             print('loss: %0.4f' % loss_fn(z))
         # ista update
         z_prev = y if fast else z
-        try:
-            z_next = F.softshrink(z_prev - lr * rss_grad(z_prev), alpha * lr)
-        except RuntimeError as e:
-            print(e)
-            print('lr error ', lr, 'did not update z')
-            z_next = z_prev  # if there a failure just reset state.
 
+        if positive:
+            # IPTA update rule based on https://mayhhu.github.io/pdf/2018_L1-NNSO-Optim_ZHYW.pdf
+            z_next = torch.clamp((torch.abs(z_prev - lr * rss_grad(z_prev))-(alpha*lr)), min=0)  # positive shrinkage operation
+        else:
+            z_next = F.softshrink(z_prev - lr * rss_grad(z_prev), alpha * lr)
         # check convergence
         if (z - z_next).abs().sum() <= tol:
             z = z_next
+            # print('reached')
             break
 
         # update variables
-        if fast:
+        if fast and i<cut:
             t_next = (1 + math.sqrt(1 + 4 * t**2)) / 2
             y = z_next + ((t-1)/t_next) * (z_next - z)
             t = t_next
         z = z_next
-
     return z
