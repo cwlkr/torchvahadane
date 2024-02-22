@@ -17,11 +17,11 @@ Benchmarks using LineProfiler show speed increase of TorchVahadane compared to S
 
 Method| fit [s] | transform  [s] | total  [s]
 | :--- | :---: | :---: | :---:
-**StainTools Vahadane**| 17.4 | 17.1 | 34.5
-**TorchVahadane** | 9.4 | 8.5 | 17.9
-**TorchVahadane ST**| 3.2 | 3.1 |  ***6.3***
+**StainTools Vahadane**| 17.4 | 17.1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  | 34.5
+**TorchVahadane** | 9.4 | 8.5 [*1.5*] | 17.9
+**TorchVahadane ST**| 3.2 | 3.1 [*1.5*] |  ***6.3***
 
-Measured using python 3.11.3 and spams 2.6.5.4
+Brackets indicate the transformation speed when using a fixed stain matrix (see [set_stain_matrix](#robust-stain-estimation-of-whole-slide-images)). Measured using python 3.11.3 and spams 2.6.5.4. 
 
 ## Usage
 
@@ -43,7 +43,7 @@ img_normed, img_mask = normalizer.transform(img, return_mask=True)
 
 In practice, Vahadane normalization does not always transfer the saturation and contrast of the reference image to the source image, this retaining a domain shift between the target and source image.
 
-This can be mitigated by using histogram matching (See [skimage.exposure.match_histograms](https://scikit-image.org/docs/stable/auto_examples/color_exposure/plot_histogram_matching.html)).
+This can be mitigated by using histogram matching (see [skimage.exposure.match_histograms](https://scikit-image.org/docs/stable/auto_examples/color_exposure/plot_histogram_matching.html)).
 
 TorchVahadane implements masked histogram matching using torch, matching the cumulative density function of the histograms only on tissue pixels. This makes histogram matching suitable to work on histology tiles with non-tissue regions.
 
