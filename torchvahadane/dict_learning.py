@@ -81,8 +81,8 @@ def dict_learning(X, n_components, alpha=1.0, constrained=True, persist=False,
     with tqdm(total=steps, disable=not progbar) as progress_bar:
         for i in range(steps):
             # infer sparse coefficients and compute loss
-            # Z = sparse_encode(X, weight, alpha, Z0, **solver_kwargs)
-            Z = sparse_encode(X, weight, alpha, Z0, algorithm='cd', init='zero', positive=True)
+            Z = sparse_encode(X, weight, alpha, Z0, **solver_kwargs)
+            # Z = sparse_encode(X, weight, alpha, Z0, algorithm='cd', init='zero', positive=True)
 
 
             # losses[i] = lasso_loss(X, Z, weight, alpha)

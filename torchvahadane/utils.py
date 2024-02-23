@@ -69,6 +69,7 @@ def convert_RGB_to_OD(I):
     """
     mask = (I == 0)
     I[mask] = 1
+    # I = torch.clamp_min_(I, 1)
     return torch.maximum(-1 * torch.log(I / 255), torch.tensor(1e-6))
 
 
@@ -95,7 +96,7 @@ def get_concentrations(I, stain_matrix, regularizer=0.01, method='ista'):
     :param regularizer:
     :return:
     """
-    OD = convert_RGB_to_OD(I).reshape((-1, 3)).to('cuda')
+    OD = convert_RGB_to_OD(I).reshape((-1, 3)).to(I.device)
     if method == 'ista':
         return ista(OD, 'ridge', stain_matrix.T, alpha=regularizer, positive=True).T
     else:

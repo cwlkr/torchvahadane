@@ -56,7 +56,7 @@ def estimate_median_matrix(osh, normalizer, osh_level, mask=None, tile_size=4096
     m_level = osh.get_best_level_for_downsample(mask_ds + .5)
 
     if mask is None:
-        mask = osh.read_region((0, 0), m_level, osh.level_dimensions[m_level])
+        img = osh.read_region((0, 0), m_level, osh.level_dimensions[m_level])
         mask = normalizer.stain_extractor.get_tissue_mask(np.asarray(img)[:,:,:3])
 
     m_size=osh.level_dimensions[m_level]
